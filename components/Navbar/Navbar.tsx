@@ -1,25 +1,24 @@
 // components/Navbar.tsx
-import Link from 'next/link'
+import Link from "next/link";
+import Image from "next/image";
 
 export default function Navbar() {
   return (
-    <nav className="bg-primary text-white">
-      <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-4">
-        <Link href="/" className="text-xl font-bold">
-          PersonaVault
+    <nav className="sticky top-0 z-40 bg-white shadow flex justify-between items-center h-16 px-4">
+      {/* Left: Home (logo or text) */}
+      <Link href="/" className="flex items-center">
+        <Image src="/next.svg" alt="Home" width={100} height={40} />
+      </Link>
+
+      {/* Right: Sign Up / Login */}
+      <div className="flex items-center space-x-4">
+        <Link href="/signup" className="hover:underline">
+          Sign Up
         </Link>
-        <div className="space-x-4">
-          <Link href="/" className="hover:underline">
-            Home
-          </Link>
-          <Link href="/auth/signin" className="hover:underline">
-            Sign In
-          </Link>
-          <Link href="/auth/signup" className="hover:underline">
-            Register
-          </Link>
-        </div>
+        <Link href="/login" className="hover:underline">
+          Login
+        </Link>
       </div>
     </nav>
-  )
+  );
 }
