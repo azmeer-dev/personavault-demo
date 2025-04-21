@@ -4,5 +4,7 @@
         "plaintext": false,
         "markdown": false,
         "scminput": false
-    }
+    },
+    "WillLuke.nextjs.addTypesOnSave": true,
+    "WillLuke.nextjs.hasPrompted": true
 }

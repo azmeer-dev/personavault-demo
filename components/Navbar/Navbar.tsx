@@ -1,16 +1,23 @@
-// components/Navbar.tsx
 import Link from "next/link";
-import Image from "next/image";
+import { Teko } from "next/font/google";
+
+const teko = Teko({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  variable: "--font-teko",
+});
 
 export default function Navbar() {
   return (
-    <nav className="sticky top-0 z-40 bg-white shadow flex justify-between items-center h-16 px-4">
-      {/* Left: Home (logo or text) */}
-      <Link href="/" className="flex items-center">
-        <Image src="/next.svg" alt="Home" width={100} height={40} />
+    <nav className={`sticky top-0 z-40 bg-white shadow flex justify-between items-center h-16 px-4 ${teko.variable}`}>
+      {/* Left: Logo Text */}
+      <Link href="/" className="flex items-center h-full">
+        <span className="text-2xl font-semibold tracking-wide text-neutral-800" style={{ fontFamily: "var(--font-teko)" }}>
+          PersonaVault
+        </span>
       </Link>
 
-      {/* Right: Sign Up / Login */}
+      {/* Right: Links */}
       <div className="flex items-center space-x-4">
         <Link href="/signup" className="hover:underline">
           Sign Up
