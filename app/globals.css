@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap');
+@import url("https://fonts.googleapis.com/css2?family=Teko:wght@300..700&display=swap");
 @import "tailwindcss";
 
 @layer base {
@@ -6,20 +6,22 @@
   html {
     box-sizing: border-box;
 
-    --color-background:    #ffffff;
+    --color-background: #ffffff;
     --color-on-background: #000000;
-    --color-surface:       #ffffff;
-    --color-on-surface:    #000000;
-    --color-primary:       #000000;
-    --color-on-primary:    #ffffff;
+    --color-surface: #ffffff;
+    --color-on-surface: #000000;
+    --color-primary: #000000;
+    --color-on-primary: #ffffff;
 
     /* Button variables */
-    --button-border:       var(--color-on-background);
-    --button-text:         var(--color-on-surface);
+    --button-border: var(--color-on-background);
+    --button-text: var(--color-on-surface);
   }
 
   /* Inherit box‑sizing everywhere */
-  *, *::before, *::after {
+  *,
+  *::before,
+  *::after {
     box-sizing: inherit;
   }
 
@@ -27,30 +29,45 @@
   .button {
     @apply rounded-lg
            border-2
+           flex
            border-[color:var(--button-border)]
            text-[var(--button-text)]
            px-4
-           py-2;
+           py-2
+           items-center
+           justify-center;
+  }
+
+  .heading {
+    @apply text-3xl 
+    p-2
+    font-semibold 
+    mb-6 
+    h-14
+    align-middle
+    items-center
+    shadow-lg/5 
+    dark:shadow-gray-50;
   }
 
   /* ─── Dark theme overrides ─── */
   html.dark {
-    --color-background:    #121212;
+    --color-background: #121212;
     --color-on-background: #ffffff;
-    --color-surface:       #1e1e1e;
-    --color-on-surface:    #ffffff;
-    --color-primary:       #ffffff;
-    
+    --color-surface: #1e1e1e;
+    --color-on-surface: #ffffff;
+    --color-primary: #ffffff;
+
     /* Update button vars for dark mode */
-    --button-border:       var(--color-on-background);
-    --button-text:         var(--color-on-background);
+    --button-border: var(--color-on-background);
+    --button-text: var(--color-on-background);
   }
 
   /* Base background & text */
   html {
     background-color: var(--color-background);
-    color:            var(--color-on-background);
-    transition:       background-color .3s, color .3s;
+    color: var(--color-on-background);
+    transition: background-color 0.3s, color 0.3s;
   }
   body {
     margin: 0;
@@ -62,12 +79,12 @@
 
 @theme inline {
   /* Expose your CSS variables as Tailwind theme tokens */
-  --color-background:    var(--color-background);
+  --color-background: var(--color-background);
   --color-on-background: var(--color-on-background);
-  --color-surface:       var(--color-surface);
-  --color-on-surface:    var(--color-on-surface);
-  --color-primary:       var(--color-primary);
-  --color-on-primary:    var(--color-on-primary);
+  --color-surface: var(--color-surface);
+  --color-on-surface: var(--color-on-surface);
+  --color-primary: var(--color-primary);
+  --color-on-primary: var(--color-on-primary);
 }
 
 @layer utilities {
@@ -75,6 +92,5 @@
     font‑family: var(--font-teko);
   }
 }
-
 
 @custom-variant dark (&:where(.dark, .dark *));

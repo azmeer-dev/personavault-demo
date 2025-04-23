@@ -4,13 +4,7 @@ import Link from "next/link";
 import { useSession, signOut } from "next-auth/react";
 import { HiMoon, HiSun } from "react-icons/hi";
 import { useTheme } from "@/lib/useTheme";
-import { Teko } from "next/font/google";
 
-const teko = Teko({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
-  variable: "--font-teko",
-});
 
 export default function Navbar() {
   const { data: session } = useSession();
