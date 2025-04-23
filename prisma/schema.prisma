@@ -9,16 +9,20 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String    @unique
-  emailVerified DateTime?
-  image         String?
-  password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  accounts      Account[]
-  sessions      Session[]
+  id              String           @id @default(cuid())
+  name            String?
+  email           String           @unique
+  emailVerified   DateTime?
+  image           String?
+  password        String?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  accounts        Account[]
+  sessions        Session[]
+  identities      Identity[]
+  apps            App[]
+  consentRequests ConsentRequest[]
+  consents        Consent[]
 }
 
 model Account {
@@ -53,4 +57,66 @@ model VerificationToken {
   expires    DateTime
 
   @@unique([identifier, token])
+}
+
+model Identity {
+  id        String   @id @default(cuid())
+  userId    String
+  context   String
+  key       String
+  value     String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model App {
+  id        String   @id @default(cuid())
+  userId    String
+  name      String
+  apiKey    String
+  scopes    String[]
+  approved  Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  ConsentRequest ConsentRequest[]
+  Consent        Consent[]
+}
+
+model ConsentRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  appId         String
+  context       String
+  requestedKeys String[]
+  approvedKeys  String[]
+  status        String   @default("pending")
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app  App  @relation(fields: [appId], references: [id], onDelete: Cascade)
+}
+
+model Consent {
+  id            String   @id @default(cuid())
+  userId        String
+  appId         String
+  grantedScopes String[]
+  grantedAt     DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  app  App  @relation(fields: [appId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  actorId     String
+  targetId    String
+  action      String
+  beforeValue String?
+  afterValue  String?
+  timestamp   DateTime @default(now())
 }

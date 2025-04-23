@@ -10,14 +10,19 @@ import TwitchProvider from "next-auth/providers/twitch";
 import prisma from "@/lib/prisma";
 import bcrypt from "bcrypt";
 
-const authOptions: NextAuthOptions = {
+export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(prisma),
+
+  // Use JWT sessions
   session: {
     strategy: "jwt",
   },
+
+  // Custom sign-in page
   pages: {
     signIn: "/login",
   },
+
   providers: [
     CredentialsProvider({
       name: "Credentials",
@@ -31,10 +36,7 @@ const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
         if (!user?.password) return null;
-        const valid = await bcrypt.compare(
-          credentials.password,
-          user.password
-        );
+        const valid = await bcrypt.compare(credentials.password, user.password);
         return valid ? user : null;
       },
     }),
@@ -57,7 +59,23 @@ const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    // Update name/image on OAuth sign-in if missing
+    async jwt({ token, user }) {
+      if (user) {
+        token.id = user.id;
+      }
+      return token;
+    },
+
+    //make id available in serversession cookie
+    async session({ session, token }) {
+      if (session.user) {
+        session.user.id = token.id as string;
+      }
+      return session;
+    },
+
+    //if user created email account and proceeds to sign in with google,
+    //adds name and image from google to account
     async signIn({ user, account, profile }) {
       if (
         account?.provider !== "credentials" &&
@@ -75,43 +93,33 @@ const authOptions: NextAuthOptions = {
       return true;
     },
 
-    // Redirect everyone to /dashboard after sign-in
+    //redirects to dashboard after succesfull sign-in
     async redirect() {
       return "/dashboard";
     },
   },
 
   events: {
-    // Merge OAuth-created user into existing credentials user
+    //merge newly created OAuth user into existing credentials user
     async createUser({ user }) {
       if (!user.email) return;
-
       const existing = await prisma.user.findFirst({
         where: {
           email: user.email,
           id: { not: user.id },
         },
       });
-
       if (existing) {
-        // Copy name/image if missing on the existing profile
         if (!existing.name && user.name) {
           await prisma.user.update({
             where: { id: existing.id },
-            data: {
-              name: user.name,
-              image: user.image ?? undefined,
-            },
+            data: { name: user.name, image: user.image ?? undefined },
           });
         }
-
-        // Reassign all Account records to the existing user
         await prisma.account.updateMany({
           where: { userId: user.id },
           data: { userId: existing.id },
         });
-
-        // Delete the duplicate OAuth user
         await prisma.user.delete({ where: { id: user.id } });
       }
     },

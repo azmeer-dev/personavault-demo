@@ -23,7 +23,7 @@ export default function LoginPage() {
         }} className="space-y-4">
           <input name="email" type="email" placeholder="Email" className="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:text-white" required />
           <input name="password" type="password" placeholder="Password" className="w-full px-4 py-2 border rounded-lg dark:bg-neutral-700 dark:text-white" required />
-          <button type="submit" className=" button w-full py-2 text-white rounded-l">Sign in with Email</button>
+          <button type="submit" className=" button w-full py- rounded-l">Sign in with Email</button>
         </form>
       </div>
     </main>
