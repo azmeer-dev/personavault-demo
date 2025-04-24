@@ -20,15 +20,31 @@ export default function Navbar() {
           bg-[var(--color-surface)] text-[var(--color-on-surface)]
         "
       >
-        {/* Logo (uses primary color) */}
         <Link href="/" className="flex items-center">
           <span className="{teko.variable} font-bold text-xl">PersonaVault</span>
         </Link>
-        <div className="ml-auto mr-0 hover:underline">
+        <div className="ml-auto mr-0">
           {session?.user ? (
-            <Link href="/dashboard">
+            <>
+            <Link href="/dashboard" className="m-2 hover:underline">
               <span>Dashboard</span>
             </Link>
+            <Link className="m-2 hover:underline" href="/connected-accounts">
+              <span>
+                    Connected Accounts
+              </span>
+            </Link>
+            <Link className="m-2 hover:underline" href="/identities">
+              <span>
+                    Identities
+              </span>
+            </Link>
+            <Link className="m-2 hover:underline" href="/users">
+              <span>
+                    Users
+              </span>
+            </Link>
+            </>
           ) : (
             <div></div>
           )}

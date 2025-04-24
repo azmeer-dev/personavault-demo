@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 
 interface OverviewData {
   accounts: number;
@@ -51,7 +52,9 @@ export default function DashboardPage() {
       <div className="p-2">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="p-4 bg-[var(--color-surface)] rounded-2xl shadow">
-            <h2 className="text-lg font-medium">Linked Accounts</h2>
+            <Link href="/connected-accounts" className="text-lg font-medium hover:underline">
+            <span> Linked Accounts
+              </span></Link>
             <p className="text-4xl font-bold mt-2">{data.accounts}</p>
           </div>
           <div className="p-4 bg-[var(--color-surface)] rounded-2xl shadow">
