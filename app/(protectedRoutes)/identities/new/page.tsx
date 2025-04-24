@@ -19,11 +19,18 @@ export default async function NewIdentityPage() {
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
 
-  const accounts = await prisma.account.findMany({
+  const rawAccounts = await prisma.account.findMany({
     where: { userId },
-    select: { id: true, provider: true, providerAccountId: true },
+    select: { id: true, provider: true, providerAccountId: true, email:true},
     orderBy: { provider: "asc" },
   });
+
+  const accounts = rawAccounts.map((a) => ({
+    id: a.id,
+    provider: a.provider,
+    providerAccountId: a.providerAccountId,
+    email: a.email ?? "",
+  }));
 
   return (
     <main className="p-6 bg-[var(--color-background)] text-[var(--color-on-background)]">

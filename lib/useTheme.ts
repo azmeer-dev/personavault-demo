@@ -1,24 +1,28 @@
-import { useState, useEffect } from "react";
+// lib/useTheme.ts
+"use client"
+
+import { useState, useEffect } from "react"
+import { useRouter } from "next/navigation"
 
 export function useTheme() {
-  const [theme, setTheme] = useState<"light" | "dark" | null>(null);
+  const [theme, setTheme] = useState<"light" | "dark">("light")
+  const router = useRouter()
 
-  // on mount, read the DOM’s class list
+  // on mount: pick up the SSR-rendered class
   useEffect(() => {
-    const isDark = document.documentElement.classList.contains("dark");
-    setTheme(isDark ? "dark" : "light");
-  }, []);
+    const isDark = document.documentElement.classList.contains("dark")
+    setTheme(isDark ? "dark" : "light")
+  }, [])
 
-  // whenever theme changes, write it back to both DOM and localStorage
+  // when theme state changes: write cookie + refresh layout
   useEffect(() => {
-    if (!theme) return;
-    document.documentElement.classList.toggle("dark", theme === "dark");
-    localStorage.setItem("theme", theme);
-  }, [theme]);
+    document.cookie = `theme=${theme};path=/;max-age=${60 * 60 * 24 * 365}`
+    router.refresh()
+  }, [theme, router])
 
   const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
+    setTheme((prev) => (prev === "dark" ? "light" : "dark"))
+  }
 
-  return { theme, toggleTheme };
+  return { theme, toggleTheme }
 }

@@ -8,6 +8,7 @@ type Account = {
   id: string;
   provider: string;
   providerAccountId: string;
+  email: string;
 };
 
 export default function NewIdentityForm({ accounts }: { accounts: Account[] }) {
@@ -107,14 +108,14 @@ export default function NewIdentityForm({ accounts }: { accounts: Account[] }) {
       <div>
         <label className="block font-medium mb-1">Link Existing Accounts</label>
         <select
-          name="accountIds"
+          name="accountEmails"
           multiple
           className="w-full p-2 border rounded-lg"
           size={Math.min(6, accounts.length || 1)}
         >
           {accounts.map((acc) => (
-            <option key={acc.id} value={acc.id}>
-              {acc.provider} ({acc.providerAccountId})
+            <option key={acc.email} value={acc.email}>
+              {acc.provider} ({acc.email})
             </option>
           ))}
         </select>

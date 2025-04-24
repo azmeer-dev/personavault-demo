@@ -1,6 +1,6 @@
 // app/api/auth/[...nextauth]/route.ts
 
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth, { NextAuthOptions, Profile } from "next-auth";
 import { PrismaAdapter } from "@next-auth/prisma-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
@@ -36,25 +36,35 @@ export const authOptions: NextAuthOptions = {
           where: { email: credentials.email },
         });
         if (!user?.password) return null;
-        const valid = await bcrypt.compare(credentials.password, user.password);
+        const valid = await bcrypt.compare(
+          credentials.password,
+          user.password
+        );
         return valid ? user : null;
       },
     }),
+
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      // ensure we get email in the OAuth response
+      authorization: { params: { scope: "openid profile email" } },
+      // preserve your merging logic
       allowDangerousEmailAccountLinking: true,
     }),
+
     GitHubProvider({
       clientId: process.env.GITHUB_CLIENT_ID!,
       clientSecret: process.env.GITHUB_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
+
     LinkedInProvider({
       clientId: process.env.LINKEDIN_CLIENT_ID!,
       clientSecret: process.env.LINKEDIN_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: true,
     }),
+
     TwitchProvider({
       clientId: process.env.TWITCH_CLIENT_ID!,
       clientSecret: process.env.TWITCH_CLIENT_SECRET!,
@@ -63,48 +73,67 @@ export const authOptions: NextAuthOptions = {
   ],
 
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account, profile }) {
       if (user) {
         token.id = user.id;
+      }
+      if (account?.provider !== "credentials" && profile?.email) {
+        token.email = profile.email;
       }
       return token;
     },
 
-    //make id available in serversession cookie
     async session({ session, token }) {
       if (session.user) {
         session.user.id = token.id as string;
+        session.user.email = token.email as string;
       }
       return session;
     },
 
-    //if user created email account and proceeds to sign in with google,
-    //adds name and image from google to account
     async signIn({ user, account, profile }) {
+      // on first OAuth sign-in, populate user.name/image if missing
       if (
         account?.provider !== "credentials" &&
-        profile?.name &&
+        (profile as Profile).name &&
         !user.name
       ) {
         await prisma.user.update({
           where: { id: user.id },
           data: {
-            name: profile.name,
-            image: profile.image ?? undefined,
+            name: (profile as Profile).name,
+            image: (profile as Profile).image ?? undefined,
           },
         });
       }
       return true;
     },
 
-    //redirects to dashboard after succesfull sign-in
+    // redirect after sign-in
     async redirect() {
       return "/dashboard";
     },
   },
 
   events: {
-    //merge newly created OAuth user into existing credentials user
+    // AFTER the Account row is created/linked, persist the provider's email
+    async linkAccount({ account, profile }) {
+      if (account.provider === "google" && (profile as Profile).email) {
+        await prisma.account.update({
+          where: {
+            provider_providerAccountId: {
+              provider: account.provider,
+              providerAccountId: account.providerAccountId,
+            },
+          },
+          data: {
+            email: (profile as Profile).email,
+          },
+        });
+      }
+    },
+
+    // merge newly created OAuth user into existing credentials user
     async createUser({ user }) {
       if (!user.email) return;
       const existing = await prisma.user.findFirst({
@@ -131,5 +160,4 @@ export const authOptions: NextAuthOptions = {
 };
 
 const handler = NextAuth(authOptions);
-
 export { handler as GET, handler as POST };

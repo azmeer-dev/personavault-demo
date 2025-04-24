@@ -1,50 +1,52 @@
 // app/users/[userId]/identities/[identityId]/page.tsx
-import { getServerSession } from "next-auth/next"
-import { redirect } from "next/navigation"
-import prisma from "@/lib/prisma"
-import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import Link from "next/link"
+import { getServerSession } from "next-auth/next";
+import { redirect } from "next/navigation";
+import prisma from "@/lib/prisma";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import Link from "next/link";
 
 export const metadata = {
   title: "Identity Details",
   description: "View a specific public identity",
-}
+};
 
-export const dynamic = "force-dynamic"
+export const dynamic = "force-dynamic";
 
 export default async function IdentityDetailPage({
   params,
 }: {
-  params: { userId: string; identityId: string }
+  params: Promise<{ userId: string; identityId: string }>;
 }) {
   // 1) Guard
-  const session = await getServerSession(authOptions)
-  if (!session?.user?.id) redirect("/login")
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) redirect("/login");
 
-  // 2) Fetch the identity, ensuring it's that user's and public
+  const {userId, identityId} = await params;
+
+  // fetch the identity
   const identity = await prisma.identity.findFirst({
     where: {
-      id: params.identityId,
-      userId: params.userId,
+      id: identityId,
+      userId,
       visibility: "PUBLIC",
     },
     include: {
       user: { select: { name: true, email: true } },
       accounts: {
-        select: { id: true, provider: true, providerAccountId: true },
+        select: { id: true, provider: true, providerAccountId: true, email: true },
       },
     },
   })
   if (!identity) {
-    redirect("/not-found")
+    redirect("/not-found");
   }
 
-  const ownerName = identity.user.name || identity.user.email
+  const ownerName = identity.user.name || identity.user.email;
 
   return (
     <main className="p-6 bg-[var(--color-background)] text-[var(--color-on-background)]">
       <Link
-        href={`/users/${params.userId}/identities`}
+        href={`/users/${userId}`}
         className="text-sm text-blue-500 hover:underline mb-4 block"
       >
         ← Back to {ownerName}’s Identities
@@ -52,8 +54,7 @@ export default async function IdentityDetailPage({
 
       <h1 className="text-3xl font-semibold mb-2">{identity.name}</h1>
       <p className="text-gray-500 mb-4">
-        {identity.type} • Created on{" "}
-        {identity.createdAt.toLocaleDateString()}
+        {identity.type} • Created on {identity.createdAt.toLocaleDateString()}
       </p>
 
       {identity.description && (
@@ -76,7 +77,7 @@ export default async function IdentityDetailPage({
           <ul className="mt-1 space-y-1">
             {identity.accounts.map((acc) => (
               <li key={acc.id}>
-                <strong>{acc.provider}:</strong> {acc.providerAccountId}
+                <strong>{acc.provider}:</strong> {acc.email}
               </li>
             ))}
           </ul>
@@ -84,11 +85,11 @@ export default async function IdentityDetailPage({
       )}
 
       <Link
-        href={`/users/${params.userId}/request-identity`}
-        className="inline-block px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition"
+        href={`/users/${userId}/request-identity`}
+        className="button w-xs"
       >
         Request Another Identity
       </Link>
     </main>
-  )
+  );
 }

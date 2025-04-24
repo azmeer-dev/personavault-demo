@@ -28,6 +28,7 @@
   /* Unified button style */
   .button {
     @apply rounded-lg
+           w-sm
            border-2
            flex
            border-[color:var(--button-border)]

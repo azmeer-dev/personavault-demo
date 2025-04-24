@@ -27,11 +27,29 @@ async function updateIdentity(formData: FormData) {
   const name        = (formData.get("name")        || "").toString().trim();
   const description = (formData.get("description") || "").toString().trim() || null;
   const customValue = (formData.get("customValue") || "").toString().trim() || null;
-  const visibility  = (formData.get("visibility") === "PUBLIC" ? "PUBLIC" : "PRIVATE");
-  const accountIds  = formData.getAll("accountIds").map(String).filter(Boolean);
+  const visibility  = formData.get("visibility") === "PUBLIC" ? "PUBLIC" : "PRIVATE";
 
   if (!id || !type || !name) {
     throw new Error("Missing required fields");
+  }
+
+  // 1) read the list of emails from the form
+  const accountEmails = formData
+    .getAll("accountEmails")
+    .map((v) => v.toString().trim())
+    .filter((e) => e.length > 0);
+
+  // 2) look up those accounts by email
+  let accountsUpdate:
+    | { set: { id: string }[] }
+    | undefined;
+
+  if (accountEmails.length > 0) {
+    const matched = await prisma.account.findMany({
+      where: { email: { in: accountEmails } },
+      select: { id: true },
+    });
+    accountsUpdate = { set: matched.map((a) => ({ id: a.id })) };
   }
 
   // Build the update payload
@@ -41,13 +59,11 @@ async function updateIdentity(formData: FormData) {
     description,
     customValue,
     visibility,
-    // reset M→N links to exactly this set
-    accounts: {
-      set: accountIds.map((aid) => ({ id: aid })),
-    },
+    // reset M→N links to exactly this set (or omit if none)
+    ...(accountsUpdate && { accounts: accountsUpdate }),
   };
 
-  // Ensure it belongs to this user
+  // Ensure it belongs to this user and apply update
   await prisma.identity.update({
     where: { id, userId },
     data,
@@ -66,9 +82,9 @@ export default async function EditIdentityPage({
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
   const userId = session.user.id;
-  const { id } = await(params);
+  const { id } = await params;
 
-  // Fetch the identity and your accounts in parallel
+  // Fetch the identity and your accounts in parallel (including email)
   const [ident, accounts] = await Promise.all([
     prisma.identity.findFirst({
       where: { id, userId },
@@ -76,15 +92,17 @@ export default async function EditIdentityPage({
     }),
     prisma.account.findMany({
       where: { userId },
-      select: { id: true, provider: true, providerAccountId: true },
+      select: { id: true, provider: true, providerAccountId: true, email: true },
       orderBy: { provider: "asc" },
     }),
   ]);
 
   if (!ident) redirect("/identities");
 
-  // Pre-select the linked account IDs
-  const linkedIds = ident.accounts.map((a) => a.id);
+  // Pre-select the linked account EMAILS
+  const linkedEmails = ident.accounts
+    .map((a) => a.email)
+    .filter((e): e is string => !!e);
 
   return (
     <main className="p-6 bg-[var(--color-background)] text-[var(--color-on-background)]">
@@ -127,21 +145,21 @@ export default async function EditIdentityPage({
           />
         </div>
 
-        {/* Linked Accounts */}
+        {/* Linked Accounts by Email */}
         <div>
           <label className="block font-medium mb-1">
-            Linked Accounts
+            Link Accounts (by email)
           </label>
           <select
-            name="accountIds"
+            name="accountEmails"
             multiple
-            defaultValue={linkedIds}
+            defaultValue={linkedEmails}
             className="w-full p-2 border rounded-lg"
             size={Math.min(6, accounts.length || 1)}
           >
             {accounts.map((acc) => (
-              <option key={acc.id} value={acc.id}>
-                {acc.provider} ({acc.providerAccountId})
+              <option key={acc.id} value={acc.email ?? ""}>
+                {acc.provider} – {acc.email}
               </option>
             ))}
           </select>
@@ -188,10 +206,7 @@ export default async function EditIdentityPage({
         </div>
 
         {/* Submit */}
-        <button
-          type="submit"
-          className="button"
-        >
+        <button type="submit" className="button">
           Save Changes
         </button>
       </Form>

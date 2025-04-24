@@ -15,15 +15,17 @@ export const dynamic = "force-dynamic";
 export default async function UserPublicIdentitiesPage({
   params,
 }: {
-  params: { userId: string };
+  params: Promise<{ userId: string }>;
 }) {
   // 1) Ensure logged in
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) redirect("/login");
 
+  const {userId} = await(params);
+
   // 2) Load target user
   const user = await prisma.user.findUnique({
-    where: { id: params.userId },
+    where: { id: userId },
     select: { id: true, name: true, email: true },
   });
   if (!user) redirect("/not-found");
